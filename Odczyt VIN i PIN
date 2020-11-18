@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// parametry do odczytu
+#define VIN_OFFSET 0x726      
+#define VIN_SIZE 14
+#define PIN_OFFSET 0x7e2
+#define PIN_SIZE 2
+
+// funkcja main przyjmuje argumenty wywyołania programu
+int main(int argc, char *argv[])
+{
+    int i;
+    char odczyt_pin[2];
+    int pin = 0;
+    char vin[15];
+    // plik - uchwyt("wskaźnik na plik") do wsadu
+    FILE *plik;
+    // sprawdzenie czy podano nazwę wsadu jako argument wywołania 
+    if(argc == 1)
+    {
+        printf("\nNie podano wsadu do odczytu!\n\n");
+        exit(-1);     // wyjście z programu z kodem -1
+    }
+    else
+    {
+        // otwarcie i sprawdzenie czy otwarto plik wsadu
+        if((plik = fopen(argv[1], "rb")) == NULL)
+        {
+            printf("\nNie udalo sie odtworzyc wsadu %s!!!\n\n", argv[1]);
+            exit(-1);
+        }
+    }
+    // dojście do wskazanego miejsca w mapie bitowej
+    for(i = 0; i < PIN_OFFSET; i++)
+        fgetc(plik);
+
+    // odczytanie pinu i przerobienie go na użyteczną wartość 
+    odczyt_pin[0] = fgetc(plik);
+    odczyt_pin[1] = fgetc(plik);
+    pin += odczyt_pin[1] << 8;
+    pin += odczyt_pin[0];
+    printf("\nPIN: %d\n\n", pin);
+
+    // przewinięcie do początku pliku
+    rewind(plik);
+
+    // dojście do wskazanego miejsca w mapie bitowej
+    for(i = 0; i < VIN_OFFSET; i++)
+        fgetc(plik);
+    
+    // odczytanie vinu i wstawienie go do tablicy
+    for(i = 0; i < VIN_SIZE; i++)
+        vin[i] = fgetc(plik);
+
+    vin[14] = '\0';
+    printf("VIN: %s\n\n", vin);
+    
+    // zamknięcie pliku
+    fclose(plik);
+    return 0;
+}
